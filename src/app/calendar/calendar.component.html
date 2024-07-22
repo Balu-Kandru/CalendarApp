@@ -1,0 +1,65 @@
+<!-- calendar.component.html -->
+<div class="calendar">
+  <div class="calendar-header">
+      <button (click)="goToPreviousMonth()" class="buttons"> << </button>
+      <h2>{{ calendarDates[7] | date: 'MMMM yyyy' }}</h2>
+      <button (click)="goToNextMonth()" class="buttons"> >> </button>
+  </div>
+  <div class="calendar-body">
+    <div class="calendar-dates">
+        <div class="calendar-weekdays">
+            <div *ngFor="let day of weekdays" class="weekday">{{ day }}</div>
+        </div>
+        <div *ngFor="let week of calendarWeeks" class="calendar-week">
+            <div *ngFor="let date of week" class="calendar-date"
+            [ngClass]="{
+                'today': isToday(date),
+                'selected': isSelected(date),
+                'previous-month': isPreviousMonth(date),
+                'next-month': isNextMonth(date)
+              }"
+              (click)="selectDate(date, week)">
+                <p class="cursor-pointer">{{ date | date: 'd' }}</p>
+                <div
+                *ngFor="let appointment of getAppointmentsForDate(date)"
+                cdkDrag
+                class="appointment"
+                (cdkDragStarted)="onDragStarted($event)"
+                (cdkDragEnded)="onDragEnded($event)"
+                >
+                <p>{{ appointment.title }} {{appointment | json}} </p>
+                <button (click)="deleteAppointment(appointment)">Delete</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="calendar-events">
+        <!-- {{selectedDate | date: 'EEE d MMMM'}} -->
+        <div class="add-appointment">
+            <h3>Add Appointment</h3>
+            <form (ngSubmit)="addAppointment()">
+              <label>Title:</label>
+              <input type="text" [(ngModel)]="newAppointment.title" name="title" required>
+              <label>Date & Time:</label>
+              <input type="datetime-local" [(ngModel)]="newAppointment.datetime" name="datetime" required>
+              <button type="submit">Add Appointment</button>
+            </form>
+        </div>
+        <div class="calendar-appointment-weekdays">
+            <div *ngFor="let day of weekdays" class="weekday">{{ day }}</div>
+        </div>
+        <div class="calendar-appointment-weekdays">
+            <div *ngFor="let days of selectedWeek" class="calendar-week"> {{days | date: 'd'}}</div>
+        </div>
+        <div class="calendar-appointment-day">
+            <div class="calendar-appointment-hours"  *ngFor="let days of selectedWeek">
+                <div *ngFor="let hour of hours" class="hours"></div>
+            </div>
+            <div class="calendar-appointment-time">
+                <div *ngFor="let hour of hours; let i= index;">{{i}} </div>
+            </div>
+        </div>
+    </div>
+    
+  </div>
+</div>

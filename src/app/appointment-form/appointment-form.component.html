@@ -1,0 +1,7 @@
+<!-- appointment-form.component.html -->
+<form (ngSubmit)="addAppointment()" #appointmentForm="ngForm">
+    <input type="text" name="title" [(ngModel)]="newAppointment.title" placeholder="Title" required>
+    <input type="datetime-local" name="datetime" [(ngModel)]="newAppointment.datetime" required>
+    <button type="submit">Add Appointment</button>
+  </form>
+  

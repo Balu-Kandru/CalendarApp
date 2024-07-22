@@ -1,0 +1,75 @@
+.calendar-header {
+    align-items: center;
+    border-bottom: 1px solid gray;
+    display: flex;
+}
+
+.calendar-weekdays, .calendar-week{
+    display: flex;
+    
+    div{
+        width: 50px;
+    }
+}
+
+.calendar-appointment-weekdays{
+    display: flex;
+    div{
+        width: 70px;
+        text-align: center;
+        justify-content: center;
+    }
+}
+
+.calendar-appointment-day{
+    display: flex;
+    flex-direction: row;
+}
+
+.calendar-appointment-hours{
+    display: flex;
+    flex-direction: column;
+    div{
+        width: 70px;
+        height: 20px;
+        border-bottom: 1px solid gray;
+        border-right: 1px solid gray;
+    }
+}
+
+.calendar-appointment-time{
+    display: flex;
+    flex-direction: row;
+    div{
+        height: 20px;
+        font-size: 12px;
+    }
+}
+
+.calendar-body{
+    display: flex;
+    justify-content: space-between;
+}
+
+.today {
+    background-color: #f0f0f0; /* Light gray background for today's date */
+}
+  
+.selected {
+    background-color: #ffc107; /* Yellow background for selected date */
+}
+
+.previous-month {
+    background-color: #eee; /* Lighter background color for dates from previous month */
+}
+
+.next-month {
+    background-color: #f7f7f7; /* Slightly lighter background color for dates from next month */
+}
+.buttons{
+    width: 25px;
+}
+
+.cursor-pointer{
+    cursor: pointer;
+}
