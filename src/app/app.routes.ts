@@ -12,11 +12,3 @@ export const routes: Routes = [
         loadChildren: () => import('./calendar/calendar.module').then(m => m.CalendarModule)
     },
 ];
-
-// @NgModule({
-//     imports: [
-//       RouterModule.forRoot(routes,)
-//     ],
-//     exports: [RouterModule]
-//   })
-//   export class AppRoutingModule { }

@@ -30,7 +30,7 @@
     display: flex;
     flex-direction: column;
     div{
-        width: 70px;
+        width: 88px;
         height: 20px;
         border-bottom: 1px solid gray;
         border-right: 1px solid gray;
@@ -39,9 +39,9 @@
 
 .calendar-appointment-time{
     display: flex;
-    flex-direction: row;
+    flex-direction: column;
     div{
-        height: 20px;
+        height: 21px;
         font-size: 12px;
     }
 }
@@ -66,10 +66,36 @@
 .next-month {
     background-color: #f7f7f7; /* Slightly lighter background color for dates from next month */
 }
+
+.appointmentExist{
+    background-color: green;
+}
+
 .buttons{
     width: 25px;
 }
 
 .cursor-pointer{
     cursor: pointer;
+}
+
+.title-div{
+    width: 50px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.title-div-for-hours{
+    width: 70px;
+    text-overflow: ellipsis;
+    overflow: hidden;
+}
+
+.deleteAppointment{
+    color: red;
+    cursor: pointer;
+    font-size: 20px;
+    position: relative;
+    right: -72px;
+    top: -24px;
 }

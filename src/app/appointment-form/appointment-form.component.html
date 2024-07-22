@@ -1,7 +1,15 @@
-<!-- appointment-form.component.html -->
-<form (ngSubmit)="addAppointment()" #appointmentForm="ngForm">
-    <input type="text" name="title" [(ngModel)]="newAppointment.title" placeholder="Title" required>
-    <input type="datetime-local" name="datetime" [(ngModel)]="newAppointment.datetime" required>
-    <button type="submit">Add Appointment</button>
+<div class="main-div">
+  <div class="heading">Add Title For the Slot On {{slotData.date | date: 'dd MM YYYY'}} from {{slotFromTime}} To {{slotToTime}} </div>
+  <form (ngSubmit)="addAppointment()">
+      <input type="text" name="title" [(ngModel)]="newAppointment.title" placeholder="Title" required>
+      <button type="submit">Add Appointment</button>
+    </form>
+</div>
+
+<div class="edit-div" *ngIf="newAppointment?.id">
+  <div class="heading">Or Chagne the Slot </div>
+  <form (ngSubmit)="changeSlot()">
+    <input type="number" max="23" min="0" name="slotChange" [(ngModel)]="newSlot"  required>
+    <button type="submit">Chagne Slot</button>
   </form>
-  
+</div>

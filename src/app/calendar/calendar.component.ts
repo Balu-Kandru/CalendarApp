@@ -1,79 +1,74 @@
 // calendar.component.ts
-import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
-import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
-import { AppointmentService } from '../appointment.service';
+import { Component, inject } from '@angular/core';
+import {MatDialog, MatDialogConfig} from '@angular/material/dialog'
+import { AppointmentFormComponent } from '../appointment-form/appointment-form.component';
+import { Store } from '@ngrx/store';
+import { Observable } from 'rxjs';
+import { Appointment } from './../state/appointment.model';
+import * as fromAppointment from './../state/appointment.selector';
+import * as AppointmentActions from './../state/appointment.actions';
 
 @Component({
   selector: 'app-calendar',
   templateUrl: './calendar.component.html',
   styleUrls: ['./calendar.component.css']
 })
-export class CalendarComponent implements OnInit {
+export class CalendarComponent {
+  
+  private readonly store = inject(Store);
+  private readonly dialog = inject(MatDialog);
+
+  constructor() {
+    const currentDate = new Date();
+    this.currentYear = currentDate.getFullYear();
+    this.currentMonth = currentDate.getMonth();
+    this.currentDate = currentDate.getDate();
+    this.generateCalendarDates(this.currentYear, this.currentMonth);
+  }
+  
   calendarDates: Date[] = [];
   calendarWeeks: Date[][] = [];
-  weekdays: string[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']; // Adjust order if needed
+  weekdays: string[] = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
   currentYear: number = 0;
   currentMonth: number = 0;
-  newAppointment: any = { title: '', datetime: '' };
+  currentDate: number = 0;
   selectedDate: Date = new Date();
   selectedWeek: any[] = [];
-  @ViewChild('timeSelectionOverlay') timeSelectionOverlay!: ElementRef<HTMLDivElement>;
-
+  appointmentsByMonthDayAndHour$: { [key: string]: { [key: number]: { [key: number]: Observable<Appointment[]> } } } = {};
   // Variables for time selection
   isSelectingTime = false;
   startTime: Date | null = null;
   endTime: Date | null = null;
   hours = Array.from({ length: 24 }, (_, i) => i);
 
-  constructor(private appointmentService: AppointmentService) { }
-
-  ngOnInit() {
-    const currentDate = new Date();
-    this.currentYear = currentDate.getFullYear();
-    this.currentMonth = currentDate.getMonth();
-    console.log(this.currentYear, this.currentMonth, currentDate)
-    this.generateCalendarDates(this.currentYear, this.currentMonth);
-  }
-
   generateCalendarDates(year: number, month: number) {
-    this.calendarDates = []; // Clear existing dates
-    this.calendarWeeks = []; // Clear existing weeks
+    this.calendarDates = [];
+    this.calendarWeeks = [];
 
-    // Get the first day of the month
     const firstDayOfMonth = new Date(year, month, 1);
-    const firstDayOfWeek = firstDayOfMonth.getDay(); // 0 (Sun) to 6 (Sat)
-
-    // Calculate the starting point of the calendar (considering starting from Monday)
-    const startOffset = (firstDayOfWeek + 6) % 7; // Adjust for Monday as start of week
-
-    // Calculate the number of days in the current month
+    const firstDayOfWeek = firstDayOfMonth.getDay();
+    const startOffset = (firstDayOfWeek + 6) % 7;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-    // Generate dates for the current month
     for (let day = 1; day <= daysInMonth; day++) {
       const date = new Date(year, month, day);
       this.calendarDates.push(date);
     }
 
-    // Fill in days from the previous month to complete the first week
-    const previousMonth = month === 0 ? 11 : month - 1; // Handle wrapping to previous year
+    const previousMonth = month === 0 ? 11 : month - 1;
     const daysInPreviousMonth = new Date(year, previousMonth + 1, 0).getDate();
-
     const previousDays = [];
+
     for (let i = startOffset - 1; i >= 0; i--) {
       const date = new Date(year, previousMonth, daysInPreviousMonth - i);
       previousDays.push(date);
-      // this.calendarDates.unshift(date); // Add to the beginning of the array
     }
 
     if(previousDays.length) this.calendarDates = [...previousDays, ...this.calendarDates]; 
 
-    // Fill in days from the next month to complete the last week
-    const nextMonth = month === 11 ? 0 : month + 1; // Handle wrapping to next year
-
-    // Calculate how many days are needed to fill the last week
+    const nextMonth = month === 11 ? 0 : month + 1;
     const totalDaysDisplayed = this.calendarDates.length;
-    const daysRemaining = 42 - totalDaysDisplayed; // 42 days for 6 weeks in a typical calendar view
+    const daysRemaining = 42 - totalDaysDisplayed;
 
     for (let day = 1; day <= daysRemaining; day++) {
       const date = new Date(year, nextMonth, day);
@@ -89,35 +84,35 @@ export class CalendarComponent implements OnInit {
         week = [];
       }
     });
+
     if (week.length > 0) {
       this.calendarWeeks.push(week);
     }
+    console.log(this.calendarWeeks)
+    if(!this.appointmentsByMonthDayAndHour$[month])
+    this.appointmentsByMonthDayAndHour$[month]= {};
+    this.getAllAppointmentsOfDay(String(month), this.selectedDate.getDate());
+    this.gettingSelectedWeeks();
   }
 
-  // Other methods like addAppointment, deleteAppointment, onDragEnded, etc. go here
-  addAppointment() {
-    this.appointmentService.addAppointment(this.newAppointment);
-    this.newAppointment = { title: '', datetime: '' };
+  private getAllAppointmentsOfDay(month: string, date: number){
+    this.appointmentsByMonthDayAndHour$[month][date] = {};
+        this.hours.forEach(hour => {
+          this.appointmentsByMonthDayAndHour$[month][date][hour] = this.store.select(fromAppointment.selectAppointmentsByMonthDayAndHour(month, date, hour))
+        });
+        console.log(this.appointmentsByMonthDayAndHour$);
   }
 
-  deleteAppointment(appointment: any) {
-    this.appointmentService.deleteAppointment(appointment);
-  }
-
-  getAppointmentsForDate(date: Date) {
-    const isoDate = date.toISOString().split('T')[0]; // Convert date to ISO format (YYYY-MM-DD)
-    return this.appointmentService.getAppointmentsForDate(isoDate);
-  }
-
-  onDragStarted(event: any){
-    console.log(event)
-  }
-
-  onDragEnded(event: any) {
-    if (event.previousContainer === event.container) {
-      moveItemInArray(event.container.data, event.previousIndex, event.currentIndex);
-    } else {
-      // Implement logic for moving appointments between containers
+  private gettingSelectedWeeks(){
+    for(let i=0; i< this.calendarWeeks.length; i++){
+      this.calendarWeeks[i].forEach((date: any) => {
+        if(date.getDate() === this.selectedDate.getDate() &&
+        date.getMonth() === this.selectedDate.getMonth() &&
+        date.getFullYear() === this.selectedDate.getFullYear()){
+          this.selectedWeek = this.calendarWeeks[i];
+          return;
+        }
+      })
     }
   }
 
@@ -181,36 +176,21 @@ export class CalendarComponent implements OnInit {
     }
   }
 
+  selectTimeSolt(hour: any, date: any){
+    console.log(hour, date);
+    this.getAllAppointmentsOfDay(String(date.getMonth()), date.getDate());
+    const dialogConfig = new MatDialogConfig();
+    dialogConfig.data = {
+      date: date, time: hour
+    };
+    dialogConfig.width = '70vw';
+    dialogConfig.height = '70vh';
 
-  onTimeSelectionStart(event: MouseEvent) {
-    this.startTime = this.calculateTimeFromMouseEvent(event);
-    this.endTime = null;
-    this.isSelectingTime = true;
+    const dialogRef = this.dialog.open(AppointmentFormComponent, dialogConfig);
+    dialogRef.afterClosed().subscribe((res: any) => {console.log(res)});
   }
 
-  onTimeSelectionMove(event: MouseEvent) {
-    if (this.isSelectingTime) {
-      this.endTime = this.calculateTimeFromMouseEvent(event);
-    }
-  }
-
-  onTimeSelectionEnd() {
-    this.isSelectingTime = false;
-    // Handle the selected time range (this.startTime to this.endTime)
-    console.log('Selected time range:', this.startTime, 'to', this.endTime);
-  }
-
-  private calculateTimeFromMouseEvent(event: MouseEvent): Date {
-    const rect = this.timeSelectionOverlay.nativeElement.getBoundingClientRect();
-    const offsetX = event.clientX - rect.left;
-    const offsetY = event.clientY - rect.top;
-    const totalWidth = rect.width;
-    const totalHeight = rect.height;
-
-    const hours = Math.floor((offsetX / totalWidth) * 24); // 24 hours in a day
-    const minutes = Math.floor((offsetY / totalHeight) * 60); // 60 minutes in an hour
-
-    const selectedDate: any = this.calendarDates.find(date => date.getDate() === this.selectedDate.getDate());
-    return new Date(selectedDate.getFullYear(), selectedDate.getMonth(), selectedDate.getDate(), hours, minutes);
+  deleteAppointment(month: number, date: number, hour: number, id: string){
+    this.store.dispatch(AppointmentActions.deleteAppointment({month: String(month), date: date, hour: hour, id: id}));
   }
 }

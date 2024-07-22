@@ -16,34 +16,21 @@
                 'today': isToday(date),
                 'selected': isSelected(date),
                 'previous-month': isPreviousMonth(date),
-                'next-month': isNextMonth(date)
+                'next-month': isNextMonth(date),
               }"
               (click)="selectDate(date, week)">
                 <p class="cursor-pointer">{{ date | date: 'd' }}</p>
-                <div
-                *ngFor="let appointment of getAppointmentsForDate(date)"
-                cdkDrag
-                class="appointment"
-                (cdkDragStarted)="onDragStarted($event)"
-                (cdkDragEnded)="onDragEnded($event)"
-                >
-                <p>{{ appointment.title }} {{appointment | json}} </p>
-                <button (click)="deleteAppointment(appointment)">Delete</button>
+                <div *ngFor="let hour of hours">
+                    <ng-container *ngIf="(appointmentsByMonthDayAndHour$?.[currentMonth]?.[date.getDate()]?.[hour] | async) || [] as appointments">
+                        <div *ngFor="let appointment of appointments"  matTooltip="{{ appointment.title }}" class="title-div">{{appointment.title }}</div>
+                    </ng-container>
                 </div>
             </div>
         </div>
     </div>
     <div class="calendar-events">
-        <!-- {{selectedDate | date: 'EEE d MMMM'}} -->
         <div class="add-appointment">
-            <h3>Add Appointment</h3>
-            <form (ngSubmit)="addAppointment()">
-              <label>Title:</label>
-              <input type="text" [(ngModel)]="newAppointment.title" name="title" required>
-              <label>Date & Time:</label>
-              <input type="datetime-local" [(ngModel)]="newAppointment.datetime" name="datetime" required>
-              <button type="submit">Add Appointment</button>
-            </form>
+            <h4>Pick a slot to add/Edit an Appointment</h4>
         </div>
         <div class="calendar-appointment-weekdays">
             <div *ngFor="let day of weekdays" class="weekday">{{ day }}</div>
@@ -53,10 +40,19 @@
         </div>
         <div class="calendar-appointment-day">
             <div class="calendar-appointment-hours"  *ngFor="let days of selectedWeek">
-                <div *ngFor="let hour of hours" class="hours"></div>
+                <div *ngFor="let hour of hours" class="hours" (click)="selectTimeSolt(hour, days)"
+                [ngClass]="{'appointmentExist' : (appointmentsByMonthDayAndHour$?.[currentMonth]?.[days.getDate()]?.[hour] | async)?.[0]?.title}">
+                    <ng-container *ngIf="(appointmentsByMonthDayAndHour$?.[currentMonth]?.[days.getDate()]?.[hour] | async) || [] as appointments">
+                            <div *ngFor="let appointment of appointments" matTooltip="{{ appointment.title }}" class="title-div-for-hours">
+                                {{appointment.title }}
+                                <mat-icon class="deleteAppointment" matToolTip="'Delete'" (click)="deleteAppointment(currentMonth, days.getDate(), hour, appointment.id)">cancel</mat-icon>
+                            </div>
+                    </ng-container>
+                </div>
             </div>
             <div class="calendar-appointment-time">
-                <div *ngFor="let hour of hours; let i= index;">{{i}} </div>
+                <div *ngFor="let hour of hours; let i= index;">
+                    {{i < 12 ? i+' AM' : i === 12 ? i+' Noon' : i-12+' PM'}} </div>
             </div>
         </div>
     </div>
